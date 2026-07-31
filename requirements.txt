@@ -1,0 +1,6 @@
+flask
+numpy
+scikit-learn==1.6.1
+joblib
+nltk
+ai-edge-litert

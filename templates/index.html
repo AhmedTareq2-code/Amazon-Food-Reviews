@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tasting Notes — Amazon Fine Food Reviews Sentiment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1e2b22;
+    --bg-alt: #24352a;
+    --chalk: #f2ede4;
+    --chalk-dim: #b9c2b4;
+    --amber: #e8a33d;
+    --rose: #c97064;
+    --sage: #8fae8b;
+    --rule: rgba(242,237,228,0.14);
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at top left, rgba(242,237,228,0.05), transparent 55%),
+      radial-gradient(ellipse at bottom right, rgba(232,163,61,0.05), transparent 50%),
+      var(--bg);
+    color: var(--chalk);
+    font-family: 'Work Sans', sans-serif;
+    padding: clamp(20px, 5vw, 56px);
+    display:flex;
+    justify-content:center;
+  }
+
+  .sheet{
+    width:100%;
+    max-width: 760px;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom: 34px;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 10px;
+  }
+
+  h1{
+    font-family:'Permanent Marker', cursive;
+    font-weight: 400;
+    font-size: clamp(2.1rem, 6vw, 3rem);
+    margin: 0 0 10px;
+    color: var(--chalk);
+    letter-spacing: 0.01em;
+  }
+
+  header p{
+    color: var(--chalk-dim);
+    font-size: 15px;
+    max-width: 440px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  .rule{
+    border:none;
+    border-top: 1px dashed var(--rule);
+    margin: 28px 0;
+  }
+
+  /* Tabs styled as hanging order tickets */
+  .tickets{
+    display:flex;
+    gap: 14px;
+    margin-bottom: -1px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .ticket{
+    flex:1;
+    background: var(--bg-alt);
+    border: 1px solid var(--rule);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    padding: 16px 14px 20px;
+    cursor:pointer;
+    text-align:left;
+    color: var(--chalk-dim);
+    transition: transform 0.18s ease, color 0.18s ease, background 0.18s ease;
+    position: relative;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 92% 88%, 84% 100%, 76% 88%, 68% 100%, 60% 88%, 52% 100%, 44% 88%, 36% 100%, 28% 88%, 20% 100%, 12% 88%, 4% 100%, 0 88%);
+  }
+
+  .ticket .tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.75;
+  }
+
+  .ticket h3{
+    margin: 6px 0 4px;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: inherit;
+  }
+
+  .ticket p{
+    margin:0;
+    font-size: 12.5px;
+    line-height: 1.4;
+    opacity: 0.85;
+  }
+
+  .ticket[aria-selected="true"]{
+    background: var(--bg);
+    color: var(--chalk);
+    transform: translateY(-4px);
+  }
+
+  .ticket[aria-selected="true"] .tag{ color: var(--amber); opacity: 1; }
+  .ticket[data-model="rnn"][aria-selected="true"] .tag{ color: var(--rose); }
+
+  .ticket:focus-visible{
+    outline: 2px solid var(--amber);
+    outline-offset: 3px;
+  }
+
+  .panel{
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 26px;
+  }
+
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+
+  label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--chalk-dim);
+    margin-bottom: 10px;
+  }
+
+  textarea{
+    width:100%;
+    min-height: 130px;
+    resize: vertical;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    color: var(--chalk);
+    font-family: 'Work Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 14px;
+  }
+
+  textarea:focus-visible{
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+  }
+
+  .row{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    margin-top: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .hint{
+    font-size: 12px;
+    color: var(--chalk-dim);
+  }
+
+  button.submit{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #1e2b22;
+    background: var(--amber);
+    border: none;
+    padding: 12px 22px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .screen[data-model="rnn"] button.submit{ background: var(--rose); }
+
+  button.submit:hover{ transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
+  button.submit:focus-visible{ outline: 2px solid var(--chalk); outline-offset: 3px; }
+  button.submit:active{ transform: translateY(0); }
+
+  /* Result / stamp */
+  .result{
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px dashed var(--rule);
+    display:none;
+  }
+
+  .result.show{ display:flex; gap:20px; align-items:center; flex-wrap: wrap; }
+
+  .stamp{
+    font-family:'Permanent Marker', cursive;
+    font-size: 26px;
+    padding: 10px 18px;
+    border: 3px solid currentColor;
+    border-radius: 8px;
+    transform: rotate(-4deg);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    animation: stampdown 0.42s ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stamp{ animation: none; }
+  }
+
+  @keyframes stampdown{
+    0%{ transform: scale(2.6) rotate(-4deg); opacity: 0; }
+    60%{ transform: scale(0.94) rotate(-4deg); opacity: 1; }
+    100%{ transform: scale(1) rotate(-4deg); opacity: 1; }
+  }
+
+  .stamp.positive{ color: var(--sage); }
+  .stamp.negative{ color: var(--rose); }
+  .stamp.neutral{ color: var(--amber); }
+
+  .meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--chalk-dim);
+    line-height: 1.7;
+  }
+
+  .meta strong{ color: var(--chalk); }
+
+  .bars{ margin-top: 6px; display:flex; flex-direction:column; gap:5px; width: 220px; }
+  .bar-row{ display:flex; align-items:center; gap:8px; font-size: 11px; }
+  .bar-row span:first-child{ width: 56px; }
+  .bar-track{ flex:1; height:6px; border-radius:4px; background: rgba(242,237,228,0.1); overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:4px; }
+
+  .stamp.loading{
+    color: var(--chalk-dim);
+    border-color: var(--chalk-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: normal;
+    animation: none;
+    transform: rotate(0deg);
+  }
+
+  .stamp.error{
+    color: var(--rose);
+    border-color: var(--rose);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    text-transform: none;
+    letter-spacing: normal;
+    animation: none;
+    transform: rotate(0deg);
+  }
+
+  button.submit:disabled{
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  footer{
+    text-align:center;
+    margin-top: 35px;
+    color: var(--chalk-dim);
+    font-size: 15px;
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+  <header>
+    <div class="eyebrow">Amazon Fine Food Reviews</div>
+    <h1>Tasting Notes</h1>
+    <p>Paste a review below. Pick your inspector — quick statistical judgment, or one that reads it word by word.</p>
+  </header>
+
+  <div class="tickets" role="tablist" aria-label="Choose a model">
+    <button class="ticket" data-model="nb" role="tab" aria-selected="true" aria-controls="screen-nb">
+      <div class="tag">Model 01</div>
+      <h3>Naive Bayes</h3>
+      <p>TF-IDF + Multinomial NB. Fast gut check from word weights.</p>
+    </button>
+    <button class="ticket" data-model="rnn" role="tab" aria-selected="false" aria-controls="screen-rnn">
+      <div class="tag">Model 02</div>
+      <h3>RNN · LSTM</h3>
+      <p>Reads the review in sequence, word by word, before it decides.</p>
+    </button>
+  </div>
+
+  <div class="panel">
+
+    <form class="screen active" id="screen-nb" data-model="nb" role="tabpanel">
+      <label for="nb-text">Review text</label>
+      <textarea id="nb-text" name="review_text" maxlength="5000" placeholder="This coffee tastes amazing, will buy again!"></textarea>
+      <div class="row">
+        <span class="hint">Sent to <code>/predict-nb</code></span>
+        <button type="submit" class="submit">Read the review</button>
+      </div>
+      <div class="result" id="result-nb"></div>
+    </form>
+
+    <form class="screen" id="screen-rnn" data-model="rnn" role="tabpanel">
+      <label for="rnn-text">Review text</label>
+      <textarea id="rnn-text" name="review_text" maxlength="5000" placeholder="Package arrived crushed, product was fine but not worth the price."></textarea>
+      <div class="row">
+        <span class="hint">Sent to <code>/predict-rnn</code></span>
+        <button type="submit" class="submit">Read the review</button>
+      </div>
+      <div class="result" id="result-rnn"></div>
+    </form>
+
+  </div>
+
+  <footer>&nbsp;·&nbsp; Developed by: Ahmed Tareq &nbsp;·&nbsp;</footer>
+</div>
+
+<script>
+  // --- Tab switching ---
+  const tickets = document.querySelectorAll('.ticket');
+  const screens = document.querySelectorAll('.screen');
+
+  tickets.forEach(ticket => {
+    ticket.addEventListener('click', () => {
+      const model = ticket.dataset.model;
+      tickets.forEach(t => t.setAttribute('aria-selected', t === ticket ? 'true' : 'false'));
+      screens.forEach(s => s.classList.toggle('active', s.dataset.model === model));
+    });
+  });
+
+  // --- Real predictions from the Flask backend (app.py) ---
+
+  function showLoading(container){
+    container.innerHTML = `<div class="stamp loading">reading review…</div>`;
+    container.classList.add('show');
+  }
+
+  function showError(container, message){
+    container.innerHTML = `<div class="stamp error">${message}</div>`;
+    container.classList.add('show');
+  }
+
+  function renderResult(container, modelLabel, endpoint, score){
+    const pct = v => Math.round(Math.min(Math.max(v, 0), 1) * 100);
+    container.innerHTML = `
+      <div class="stamp ${score.label}">${score.label}</div>
+      <div class="meta">
+        <div>Model: <strong>${modelLabel}</strong></div>
+        <div>Route: <strong>${endpoint}</strong></div>
+        <div class="bars">
+          <div class="bar-row"><span>positive</span><div class="bar-track"><div class="bar-fill" style="width:${pct(score.pos)}%; background:var(--sage);"></div></div></div>
+          <div class="bar-row"><span>neutral</span><div class="bar-track"><div class="bar-fill" style="width:${pct(score.neu)}%; background:var(--amber);"></div></div></div>
+          <div class="bar-row"><span>negative</span><div class="bar-track"><div class="bar-fill" style="width:${pct(score.neg)}%; background:var(--rose);"></div></div></div>
+        </div>
+      </div>
+    `;
+    container.classList.add('show');
+  }
+
+  async function submitReview({ endpoint, text, button, resultEl, modelLabel }){
+    button.disabled = true;
+    showLoading(resultEl);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ review_text: text })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showError(resultEl, data.error || `Couldn't reach the model — try again.`);
+        return;
+      }
+
+      renderResult(resultEl, modelLabel, endpoint, data);
+    } catch (err) {
+      showError(resultEl, `Couldn't reach the server — check your connection and try again.`);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  document.getElementById('screen-nb').addEventListener('submit', e => {
+    e.preventDefault();
+    const text = document.getElementById('nb-text').value.trim();
+    if(!text) return;
+    submitReview({
+      endpoint: '/predict-nb',
+      text,
+      button: e.target.querySelector('button.submit'),
+      resultEl: document.getElementById('result-nb'),
+      modelLabel: 'Naive Bayes (TF-IDF)'
+    });
+  });
+
+  document.getElementById('screen-rnn').addEventListener('submit', e => {
+    e.preventDefault();
+    const text = document.getElementById('rnn-text').value.trim();
+    if(!text) return;
+    submitReview({
+      endpoint: '/predict-rnn',
+      text,
+      button: e.target.querySelector('button.submit'),
+      resultEl: document.getElementById('result-rnn'),
+      modelLabel: 'RNN (LSTM)'
+    });
+  });
+</script>
+
+</body>
+</html>
