@@ -1,5 +1,0 @@
-Build command:
-apt-get update && apt-get install -y git-lfs && pip install -r requirements.txt
-Start command:
-python -m streamlit run app.py --server.port $PORT --server.address 0.0.0.0
-gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
