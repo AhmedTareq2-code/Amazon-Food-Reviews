@@ -1,37 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# # Final Project Work: Capstone Application of Skills
-
-# ## Chosen Project: Sentiment Analysis of Tweets or Reviews
-# 
-# - **Type:** NLP + Classification
-# 
-# - **Goal:** Classify sentiments as Positive, Negative, or Neutral
-# 
-# - **Techniques:** Text vectorization (TF-IDF), Naive Bayes, RNN (optional)
-
-# **Dataset:** **`Amazon Fine Food Reviews`** at Kaggle.
-
-# ### Step 1: Problem Definition
-
-# **Problem:** Given the text of a customer product review, automatically classify its sentiment as **Positive**, **Negative**, or **Neutral**.
-# 
-# **Input:** Raw review text (e.g., "This coffee tastes amazing, will buy again!")
-# 
-# **Output:** One of three sentiment classes — Positive / Negative / Neutral
-# 
-# **Why it matters:** Businesses receive large volumes of customer reviews and can't manually read every one. An automated sentiment classifier lets a company quickly flag negative reviews for follow-up, track overall customer satisfaction trends, and identify which products are well-received — without needing a human to read every single review.
-# 
-# **Framing the labels from the dataset:** The Amazon Fine Food Reviews dataset provides a 1–5 star `Score` column, not text labels directly — so part of this problem is also defining the mapping:
-# - Score 4–5 → Positive
-# - Score 3 → Neutral
-# - Score 1–2 → Negative
-# 
-# **Type of ML problem:** Supervised, multi-class text classification (3 classes).
-
-# ### Step 2: Data Collection / Loading
-
 # Import the libraries
 import numpy as np
 import pandas as pd
@@ -119,7 +85,6 @@ sorted_df.head(10)
 # Checking to see how much % of data still remains
 (sorted_df['Id'].size*1.0)/(df['Id'].size*1.0)*100
 
-# ### Step 4: Exploratory Data Analysis (EDA)
 
 # Box plots of scores vs HelpfulnessNumerator & HelpfulnessDenominator (log scale)
 plt.figure(figsize=(10,5))
@@ -140,26 +105,17 @@ plt.ylabel("HelpfulnessDenominator Score")
 plt.tight_layout()
 plt.show()
 
-# **1. Box plots — Score vs HelpfulnessNumerator/Denominator (log scale):**
-# Shows vote-count distribution per star rating on a log y-axis (needed because raw vote counts are extremely right-skewed — most reviews get 0-2 votes, a few get hundreds). Reveals a U-shaped pattern: 1-star and 5-star reviews attract more votes (higher median, wider box) than 3–4 star reviews. This suggests readers engage more with strongly opinionated reviews than lukewarm ones — a genuinely useful behavioral insight for this dataset.
-
 # Histogram of the Scores
 sns.histplot(data=sorted_df, x="Score", kde=True, bins=range(int(sorted_df["Score"].min()), int(sorted_df["Score"].max()) + 2, 1))
 plt.title("Distribution of Scores")
 plt.ticklabel_format(style='plain', axis='y')
 plt.show()
 
-# **2. Histogram of Scores:**
-# Shows the raw distribution of star ratings. The dataset is heavily skewed toward 5-star reviews, with far fewer 1–3 star reviews. This is the most consequential EDA finding for the project: since the sentiment label (positive/negative/neutral) is derived directly from Score, this imbalance will carry into the target classes, and the model in Step 7 may need class weighting or resampling to avoid a "predict positive every time" shortcut.
-
 # Scatter plot to see the relationship between HelpfulnessNumerator & HelpfulnessDenominator
 plt.scatter(sorted_df["HelpfulnessNumerator"], sorted_df["HelpfulnessDenominator"])
 plt.title("Scatter Plot of HelpfulnessNumerator vs HelpfulnessDenominator")
 plt.xlabel("HelpfulnessNumerator Score")
 plt.ylabel("HelpfulnessDenominator Score")
-
-# **3. Scatter — HelpfulnessNumerator vs HelpfulnessDenominator:**
-# Confirms the expected near-linear relationship (Numerator ≤ Denominator by construction, enforced in the earlier cleaning step). Mostly a sanity check that the data-cleaning worked, rather than a new discovery.
 
 # Check the number of Division-by-zero entries
 print((sorted_df["HelpfulnessDenominator"] == 0).sum()) 
@@ -178,13 +134,7 @@ plt.xlabel("Score")
 plt.ylabel("Helpfulness Score")
 plt.show()
 
-# **4. Score vs mean Helpfulness Score, filtered to ≥1 vote:**
-# This plot shows helpfulness ratio rises with star rating among reviews that received votes.
-
-# ### Step 5: Feature Engineering
-
 # Text Preprocessing
-
 # set of stopwords
 stop = set(stopwords.words('english'))
 
@@ -214,8 +164,6 @@ sorted_df['clean_combined'] = sorted_df['clean_summary'] + " " + sorted_df['clea
 
 X = sorted_df['clean_combined']
 y = sorted_df['sentiment']
-
-# ### Step 6: Splitting the Data
 
 # Split before upsampling — to avoid data leakage
 X_train_text, X_test_text, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=40)
@@ -272,8 +220,7 @@ y_test_encoded = y_test.map(label_map)
 y_train = to_categorical(y_train_encoded, num_classes=3)
 y_test = to_categorical(y_test_encoded, num_classes=3)
 
-# ### Step 7: Model Selection and Training
-
+# train
 model = MultinomialNB()
 model.fit(X_train, y_train_encoded)
 
@@ -308,8 +255,6 @@ history = rnn_model.fit(
     batch_size=256,
     callbacks=[early_stop]
 )
-
-# ### Step 8: Model Evaluation
 
 # Evaluate Naive Bayes model
 cm = confusion_matrix(y_test_encoded, y_pred)
@@ -346,7 +291,7 @@ plt.ylabel("Actual label")
 plt.title("RNN Confusion Matrix")
 plt.show()
 
-# ### Step 9: New Predictions
+# New Predictions
 
 # Preprocessing step
 def prepare_review(text, summary=""):
@@ -382,7 +327,7 @@ def predict_sentiment_rnn(text, summary=""):
 print(predict_sentiment_rnn("This product was amazing, I loved it!"))
 print(predict_sentiment_rnn("Terrible quality, broke after one use."))
 
-# ### Step 10: Productionization and deployment of models
+# Productionization and deployment of models
 
 import joblib
 
@@ -399,4 +344,3 @@ joblib.dump(tokenizer, "tokenizer.pkl")
 # Save label_map and max_len
 joblib.dump({"label_map": label_map, "max_len": max_len, "max_words": max_words}, "config.pkl")
 
-# ### Step 11: Conclusion and Insights
