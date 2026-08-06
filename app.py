@@ -14,12 +14,12 @@ app = Flask(__name__)
 MAX_REVIEW_CHARS = 5000  # basic guard against huge/abusive payloads
 
 
-# ---------------------------------------------------------------------------
+
 # Load every saved artifact ONCE at startup, not per-request.
 # (The tutorial snippet you shared calls joblib.load() inside predict() on
 # every single request — that re-reads the pickle from disk each time,
 # which is slow and pointless since the model never changes between calls.)
-# ---------------------------------------------------------------------------
+
 # Vercel's serverless filesystem is read-only except /tmp, so nltk.download()
 # to the default location crashes the function on every cold start. Point it
 # at /tmp instead, and skip the download if it's already there.
@@ -79,10 +79,10 @@ LABEL_MAP_INV = {v: k for k, v in LABEL_MAP.items()}   # {0: "negative", 1: "neu
 MAX_LEN = config["max_len"]
 
 
-# ---------------------------------------------------------------------------
+
 # Same preprocessing used to train both models — must stay identical to
 # model.py's preprocess()/prepare_review(), or train/inference will skew.
-# ---------------------------------------------------------------------------
+
 def preprocess(text, stopwords_set):
     text = re.sub("<.*?>", " ", text)             # remove HTML tags
     text = re.sub(r"[?!\'\"#]", "", text)          # remove punctuation
@@ -116,9 +116,9 @@ def get_review_text():
     return text, None
 
 
-# ---------------------------------------------------------------------------
+
 # Routes
-# ---------------------------------------------------------------------------
+
 @app.route("/")
 def hello_world():
     return 'Hello World!'
